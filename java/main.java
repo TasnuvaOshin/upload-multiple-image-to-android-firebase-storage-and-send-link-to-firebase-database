@@ -75,41 +75,48 @@ DatabaseReference databaseReference;
     }
 
 
-    public void Upload(View view) {
-
-        //folder
-        final StorageReference filepath = FirebaseStorage.getInstance().getReference().child("gpic");
-
-        while (up < mArrayUri.size()){
-            filepath.child(mArrayUri.get(k).getLastPathSegment()).putFile(mArrayUri.get(k)).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    Toast.makeText(MainActivity.this, "Uploaded", Toast.LENGTH_LONG).show();
+    public void upload(View view) {
+        progressDialog.show();
+        final StorageReference ImageFolder =
+                FirebaseStorage.getInstance().getReference().child("ImageFolder");
+        for (uploads=0; uploads < ImageList.size(); uploads++) {
 
 
+            ImageFolder.child(Objects.requireNonNull(ImageList.get(uploads).getLastPathSegment()))
+                    .putFile(ImageList.get(uploads));
 
-                }
-            });
-
-
-
-            filepath.child(mArrayUri.get(k).getLastPathSegment()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            ImageFolder.child(Objects.requireNonNull(ImageList.get(uploads).getLastPathSegment())).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>()
+            {
                 @Override
                 public void onSuccess(Uri uri) {
-
                     String url = String.valueOf(uri);
-                    databaseReference.push().setValue(url).addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            Toast.makeText(MainActivity.this, "Done", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    SendLink(url);
+
                 }
             });
-            up++;
-            k++;
+
+
+
+
+
 
         }
+
+
+    }
+
+    private void SendLink(String url) {
+        HashMap<String, String> hashMap = new HashMap<>();
+        hashMap.put("link", url);
+        databaseReference.push().setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+
+                progressDialog.dismiss();
+                Toast.makeText(MainActivity.this, "Successfully Uploaded", Toast.LENGTH_SHORT).show();
+                ImageList.clear();
+            }
+        });
 
 
     }
