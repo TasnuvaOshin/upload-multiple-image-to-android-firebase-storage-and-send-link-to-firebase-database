@@ -14,7 +14,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     int index = 0;
     TextView textView;
- Button choose,send;
+    Button choose,send;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,9 +112,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+    }   
     }
-
-}
 
 
 
