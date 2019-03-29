@@ -3,136 +3,118 @@ upload image to firebase storage and send link to firebase database . Very Easy 
 to understand more about this please go to my youtube channel and learn about this. thanks
 
 
-
-package oshin.tasnuva.firebase;
-
-import android.app.ProgressDialog;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
-import android.view.View;
-import android.widget.Toast;
-
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
-
-public class MainActivity extends AppCompatActivity {
+        public class MainActivity extends AppCompatActivity {
 
 
-    private static final int PICK_IMG = 1;
-    private ArrayList<Uri> ImageList = new ArrayList<Uri>();
-    private int uploads = 0;
-    private int index = 0;
-    private DatabaseReference databaseReference;
-    private ProgressDialog progressDialog;
+            private static final int PICK_IMG = 1;
+            private ArrayList<Uri> ImageList = new ArrayList<Uri>();
+            private int uploads = 0;
+            private int index = 0;
+            private DatabaseReference databaseReference;
+            private ProgressDialog progressDialog;
 
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+            @Override
+            protected void onCreate(Bundle savedInstanceState) {
+                super.onCreate(savedInstanceState);
+                setContentView(R.layout.activity_main);
 
-        databaseReference = FirebaseDatabase.getInstance().getReference().child("User_one");
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Uploading ..........");
-    }
+                databaseReference = FirebaseDatabase.getInstance().getReference().child("User_one");
+                progressDialog = new ProgressDialog(this);
+                progressDialog.setMessage("Uploading ..........");
+            }
 
-    public void choose(View view) {
-        //we will pick images
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/*");
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        startActivityForResult(intent, PICK_IMG);
+            public void choose(View view) {
+                //we will pick images
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                startActivityForResult(intent, PICK_IMG);
 
-    }
+            }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+            @Override
+            protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+                super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == PICK_IMG) {
-            if (resultCode == RESULT_OK) {
-                if (data.getClipData() != null) {
-                    int count = data.getClipData().getItemCount();
+                if (requestCode == PICK_IMG) {
+                    if (resultCode == RESULT_OK) {
+                        if (data.getClipData() != null) {
+                            int count = data.getClipData().getItemCount();
 
-                    int CurrentImageSelect = 0;
+                            int CurrentImageSelect = 0;
 
-                    while (CurrentImageSelect < count) {
-                        Uri imageuri = data.getClipData().getItemAt(CurrentImageSelect).getUri();
-                        ImageList.add(imageuri);
-                        CurrentImageSelect = CurrentImageSelect + 1;
+                            while (CurrentImageSelect < count) {
+                                Uri imageuri = data.getClipData().getItemAt(CurrentImageSelect).getUri();
+                                ImageList.add(imageuri);
+                                CurrentImageSelect = CurrentImageSelect + 1;
+                            }
+
+                            Toast.makeText(this, "You Have Selected " + ImageList.size() + " Images", Toast.LENGTH_SHORT).show();
+
+                        }
+
                     }
 
-                    Toast.makeText(this, "You Have Selected " + ImageList.size() + " Images", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+
+            public void upload(View view) {
+                progressDialog.show();
+                final StorageReference ImageFolder =
+                        FirebaseStorage.getInstance().getReference().child("ImageFolder");
+                for (uploads=0; uploads < ImageList.size(); uploads++) {
+
+
+                    ImageFolder.child(Objects.requireNonNull(ImageList.get(uploads).getLastPathSegment()))
+                            .putFile(ImageList.get(uploads));
+
+                    ImageFolder.child(Objects.requireNonNull(ImageList.get(uploads).getLastPathSegment())).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>()
+                    {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            String url = String.valueOf(uri);
+                            SendLink(url);
+
+                        }
+                    });
+
+
+
+
+
 
                 }
+
+
+            }
+
+            private void SendLink(String url) {
+                HashMap<String, String> hashMap = new HashMap<>();
+                hashMap.put("link", url);
+                databaseReference.push().setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+
+                        progressDialog.dismiss();
+                        Toast.makeText(MainActivity.this, "Successfully Uploaded", Toast.LENGTH_SHORT).show();
+                        ImageList.clear();
+                    }
+                });
+
 
             }
 
         }
 
-    }
-
-    public void upload(View view) {
-        progressDialog.show();
-        final StorageReference ImageFolder =
-                FirebaseStorage.getInstance().getReference().child("ImageFolder");
-        for (uploads=0; uploads < ImageList.size(); uploads++) {
-
-
-            ImageFolder.child(Objects.requireNonNull(ImageList.get(uploads).getLastPathSegment()))
-                    .putFile(ImageList.get(uploads));
-
-            ImageFolder.child(Objects.requireNonNull(ImageList.get(uploads).getLastPathSegment())).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>()
-            {
-                @Override
-                public void onSuccess(Uri uri) {
-                    String url = String.valueOf(uri);
-                    SendLink(url);
-
-                }
-            });
 
 
 
 
 
 
-        }
 
-
-    }
-
-    private void SendLink(String url) {
-        HashMap<String, String> hashMap = new HashMap<>();
-        hashMap.put("link", url);
-        databaseReference.push().setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-
-                progressDialog.dismiss();
-                Toast.makeText(MainActivity.this, "Successfully Uploaded", Toast.LENGTH_SHORT).show();
-                ImageList.clear();
-            }
-        });
-
-
-    }
-
-}
 
 
 
