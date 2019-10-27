@@ -11,6 +11,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Uri> ImageList = new ArrayList<Uri>();
     private int uploads = 0;
     private DatabaseReference databaseReference;
+    private StorageReference storagereference;
     private ProgressDialog progressDialog;
     int index = 0;
     TextView textView;
